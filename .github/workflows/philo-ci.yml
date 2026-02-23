@@ -374,3 +374,88 @@ jobs:
         run: |
           echo "::error::Sanitizer/Valgrind reported issues. See sanitizer-${{ matrix.tool }}-log artifact."
           exit 1
+
+  # ==========================================================================
+  # Job 6 – Scheduler mock (rare interleaving stress test)
+  # ==========================================================================
+  #
+  # scheduler_mock.so intercepts pthread_create and pthread_mutex_lock and
+  # injects small artificial delays (0–500 µs by default) before each call.
+  # This pushes threads into orderings they would almost never reach in a
+  # normal run, dramatically increasing the chance of surfacing deadlocks and
+  # data races that are otherwise hard to reproduce.
+  #
+  # A thin wrapper script (philo_sched) sets LD_PRELOAD only for the philo
+  # process, keeping Python itself free of the library so its GIL operations
+  # are not slowed down.
+  # ==========================================================================
+  scheduler-mock-stress:
+    name: Scheduler Mock (rare interleaving stress)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Download the plain (no-sanitizer) binary.
+      - name: Download philo binary (none)
+        uses: actions/download-artifact@v4
+        with:
+          name: philo-none
+
+      - name: Make binary executable
+        run: chmod +x philo
+
+      # Build the scheduler mock shared library from tests/scheduler_mock.c.
+      - name: Build libscheduler_mock.so
+        run: |
+          gcc -shared -fPIC \
+              -o libscheduler_mock.so \
+              tests/scheduler_mock.c \
+              -ldl \
+              2>&1 | tee scheduler-mock-build.log
+
+      # Create a thin wrapper script that injects LD_PRELOAD only for philo,
+      # not for the Python interpreter that drives philo-test.py.
+      - name: Create philo wrapper with LD_PRELOAD
+        run: |
+          cat > philo_sched << 'WRAPPER'
+          #!/bin/sh
+          exec env LD_PRELOAD="$(cd "$(dirname "$0")" && pwd)/libscheduler_mock.so" \
+               "$(cd "$(dirname "$0")" && pwd)/philo" "$@"
+          WRAPPER
+          chmod +x philo_sched
+
+      # Run the full philo-test.py suite via the wrapper binary.
+      # The scheduler mock forces rare thread interleavings without altering
+      # the binary under test; axiom checks remain valid.
+      - name: Run stress tests with scheduler mock
+        id: sched_test
+        run: |
+          set +e
+          SCHED_MOCK_MODE=random \
+          SCHED_MOCK_MAX_US=500 \
+          SCHED_MOCK_SEED=42 \
+            python3 philo-test.py \
+              --binary ./philo_sched \
+              --timeout ${{ env.TEST_TIMEOUT }} \
+              --stress-iterations 10 \
+              2>&1 | tee scheduler-mock-stress.log
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          set -e
+
+      - name: Upload scheduler mock logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduler-mock-stress-log
+          path: |
+            scheduler-mock-stress.log
+            scheduler-mock-build.log
+          if-no-files-found: ignore
+
+      - name: Assert scheduler mock result
+        if: steps.sched_test.outputs.exit_code != '0'
+        run: |
+          echo "::error::Scheduler mock stress tests failed. See scheduler-mock-stress-log artifact."
+          exit 1
