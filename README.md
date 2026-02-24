@@ -38,6 +38,7 @@ The repository ships with a full CI pipeline under `.github/workflows/philo-ci.y
 | **Functional tests** | Runs `philo-test.py` — validates all 5 dining-philosopher axioms and a stress loop |
 | **Mock POSIX** | Builds `tests/mock_posix.so` and injects `malloc` / `pthread_create` / `pthread_mutex_lock` failures |
 | **Sanitizers / Valgrind** | Runs the binary under ThreadSanitizer and Valgrind to catch races and leaks |
+| **Scheduler Mock (stress)** | Builds `tests/scheduler_mock.so`, runs `philo-test.py` with artificial delays to expose rare thread interleavings |
 
 Logs from failing jobs are uploaded as GitHub Actions artifacts for easy inspection.
 
@@ -56,6 +57,38 @@ The script validates five axioms:
 5. **Fairness** – every philosopher gets to eat at least once
 
 Exit code `0` = all tests passed, `1` = at least one failure.
+
+## Scheduler Mock Library (`tests/scheduler_mock.c`)
+
+Adds tiny artificial delays before `pthread_create` and `pthread_mutex_lock`
+to force rare thread interleavings without causing failures.  Combined with
+ThreadSanitizer this gives two independent layers of concurrency-bug coverage:
+
+| Layer | What it does |
+|-------|-------------|
+| `scheduler_mock.so` | Nudges threads into unusual orderings via µs-scale delays |
+| ThreadSanitizer | Detects unsynchronised memory accesses at the analysis level |
+
+```sh
+# Build the shared library
+gcc -shared -fPIC -o libscheduler_mock.so tests/scheduler_mock.c -ldl
+
+# Run philo with random delays (default: 0–500 µs per lock/create)
+LD_PRELOAD=./libscheduler_mock.so ./philo 5 800 200 200
+
+# Sequential mode – cycles through 10 evenly-spaced delay values
+SCHED_MOCK_MODE=sequential LD_PRELOAD=./libscheduler_mock.so ./philo 5 800 200 200
+
+# Reproducible run with explicit seed and verbose output
+SCHED_MOCK_SEED=7 SCHED_MOCK_VERBOSE=1 LD_PRELOAD=./libscheduler_mock.so ./philo 5 800 200 200
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SCHED_MOCK_MODE` | `random` | `random` or `sequential` delay strategy |
+| `SCHED_MOCK_MAX_US` | `500` | Maximum delay in microseconds |
+| `SCHED_MOCK_SEED` | `42` | PRNG seed (for reproducible random runs) |
+| `SCHED_MOCK_VERBOSE` | unset | Set to `1` to log every injected delay to stderr |
 
 ## Mock POSIX Library (`tests/mock_posix.c`)
 
@@ -88,7 +121,8 @@ ft_philosophers/
 │   └── ft_philo.h                 # Shared types and prototypes
 ├── src/                           # Philosopher logic (threads, routines …)
 ├── tests/
-│   └── mock_posix.c               # LD_PRELOAD failure injection library
+│   ├── mock_posix.c               # LD_PRELOAD failure injection library
+│   └── scheduler_mock.c           # LD_PRELOAD interleaving explorer (delays)
 ├── philo-test.py                  # Python test harness (5 axioms + stress)
 └── .github/
     └── workflows/
