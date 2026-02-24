@@ -1,0 +1,126 @@
+# ============================================================================
+# .github/workflows/sanitizers.yml
+# ============================================================================
+# Volatility / memory-safety CI — runs the philo binary under
+# ThreadSanitizer and Valgrind to catch data races and memory leaks.
+# A dedicated workflow gives this check its own badge in the README.
+# ============================================================================
+
+name: Sanitizers
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  TEST_TIMEOUT: 30
+
+jobs:
+  sanitizers:
+    name: Sanitizer / Valgrind (${{ matrix.tool }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: [tsan, valgrind]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Build the binary with the sanitizer flags needed for this matrix leg.
+      - name: Compile philo
+        run: |
+          if [ "${{ matrix.tool }}" = "tsan" ]; then
+            EXTRA_CFLAGS="-fsanitize=thread -g"
+            EXTRA_LDFLAGS="-fsanitize=thread"
+          else
+            EXTRA_CFLAGS="-g"
+            EXTRA_LDFLAGS=""
+          fi
+          if [ -f Makefile ]; then
+            make CFLAGS="-Wall -Wextra -Werror $EXTRA_CFLAGS" \
+                 LDFLAGS="$EXTRA_LDFLAGS" \
+                 2>&1 | tee build-${{ matrix.tool }}.log
+          else
+            C_FILES=$(find . -maxdepth 2 -name "*.c" \
+              | grep -v "tests/" \
+              | tr '\n' ' ')
+            gcc -Wall -Wextra -Werror $EXTRA_CFLAGS \
+                -Iincludes \
+                $C_FILES \
+                -o philo \
+                -lpthread $EXTRA_LDFLAGS \
+                2>&1 | tee build-${{ matrix.tool }}.log
+          fi
+
+      - name: Install Valgrind
+        if: matrix.tool == 'valgrind'
+        run: sudo apt-get install -y --no-install-recommends valgrind
+
+      - name: Run under ${{ matrix.tool }}
+        id: san_run
+        run: |
+          set +e
+          if [ "${{ matrix.tool }}" = "tsan" ]; then
+            TSAN_OPTIONS="halt_on_error=0 log_path=tsan.log" \
+              ./philo 5 800 200 200 &
+            PID=$!
+            sleep 6
+            kill $PID 2>/dev/null || true
+            wait $PID 2>/dev/null || true
+            cat tsan.log* 2>/dev/null | tee sanitizer-tsan.log
+            if grep -q "DATA RACE\|WARNING: ThreadSanitizer" sanitizer-tsan.log 2>/dev/null; then
+              echo "::error::ThreadSanitizer detected data races!"
+              echo "exit_code=1" >> "$GITHUB_OUTPUT"
+            else
+              echo "::notice::No ThreadSanitizer issues detected"
+              echo "exit_code=0" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            valgrind \
+              --tool=memcheck \
+              --leak-check=full \
+              --error-exitcode=1 \
+              --log-file=sanitizer-valgrind.log \
+              ./philo 4 310 200 100 &
+            PID=$!
+            sleep 6
+            kill $PID 2>/dev/null || true
+            wait $PID 2>/dev/null || true
+            cat sanitizer-valgrind.log
+            if grep -qE "ERROR SUMMARY: [1-9][0-9]* error" sanitizer-valgrind.log; then
+              echo "::error::Valgrind reported memory errors!"
+              echo "exit_code=1" >> "$GITHUB_OUTPUT"
+            else
+              echo "::notice::No Valgrind memory errors detected"
+              echo "exit_code=0" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+          set -e
+
+      - name: Upload sanitizer log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanitizer-${{ matrix.tool }}-log
+          path: sanitizer-*.log
+          if-no-files-found: ignore
+
+      - name: Assert sanitizer result
+        if: steps.san_run.outputs.exit_code != '0'
+        run: |
+          echo "::error::Sanitizer/Valgrind reported issues. See sanitizer-${{ matrix.tool }}-log artifact."
+          exit 1
