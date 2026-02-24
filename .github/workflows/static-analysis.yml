@@ -53,16 +53,21 @@ jobs:
           echo "c_only=$C_ONLY" >> "$GITHUB_OUTPUT"
 
       # ------------------------------------------------------------------
-      # cppcheck – broad static analysis: undefined behaviour, memory
-      # issues, style warnings, and performance hints.
+      # cppcheck – bug-focused static analysis: undefined behaviour,
+      # memory issues and performance hints.
+      #
+      # Style checks are intentionally omitted (--enable does NOT include
+      # "style") because Norminette is the authoritative style checker for
+      # this project.  Enabling cppcheck's style category would produce
+      # findings that directly conflict with 42 Norm conventions (e.g.
+      # short variable names, function structure).
       # ------------------------------------------------------------------
       - name: Run cppcheck
         id: cppcheck
         run: |
           set +e
           cppcheck \
-            --enable=all \
-            --inconclusive \
+            --enable=warning,performance,portability \
             --std=c11 \
             --suppress=missingIncludeSystem \
             -Iincludes \
@@ -82,15 +87,20 @@ jobs:
           if-no-files-found: ignore
 
       # ------------------------------------------------------------------
-      # clang-tidy – compiler-level checks for bugs, modernisation and
-      # portability issues.  We use the checks recommended for C projects.
+      # clang-tidy – compiler-level checks for bugs, security and
+      # portability issues.
+      #
+      # Style-oriented check groups (readability-*, modernize-*) are
+      # explicitly excluded: style is owned by Norminette.  The retained
+      # groups (bugprone-*, cert-*, clang-analyzer-*, performance-*,
+      # portability-*) surface bugs and security issues only.
       # ------------------------------------------------------------------
       - name: Run clang-tidy
         id: clang_tidy
         run: |
           set +e
           clang-tidy \
-            --checks="bugprone-*,cert-*,clang-analyzer-*,performance-*,portability-*" \
+            --checks="bugprone-*,cert-*,clang-analyzer-*,performance-*,portability-*,-readability-*,-modernize-*" \
             -p . \
             --extra-arg=-Iincludes \
             --extra-arg=-std=c11 \

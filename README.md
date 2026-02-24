@@ -58,10 +58,12 @@ The repository ships with four focused CI workflows, each with its own badge.
 
 ### `static-analysis.yml` — Static analysis
 
+> Style checking is owned by **Norminette** (`norminette.yml`). The static analysers below focus exclusively on bugs, security and performance — style checks are disabled to avoid conflicts with 42 Norm conventions.
+
 | Job | Description |
 |-----|-------------|
-| **cppcheck** | Broad static analysis: undefined behaviour, memory issues, style and performance hints |
-| **clang-tidy** | Compiler-level checks for bugs, portability and cert/bugprone categories |
+| **cppcheck** | Bug-focused analysis: undefined behaviour, memory issues and performance hints (style category disabled) |
+| **clang-tidy** | Compiler-level checks for bugs, portability and cert/bugprone categories (style and modernize checks disabled) |
 
 Logs from failing jobs are uploaded as GitHub Actions artifacts for easy inspection.
 
