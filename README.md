@@ -1,6 +1,9 @@
 # ft_philosophers
 
 [![Philosophers CI](https://github.com/Kodoque1/ft_philosophers/actions/workflows/philo-ci.yml/badge.svg)](https://github.com/Kodoque1/ft_philosophers/actions/workflows/philo-ci.yml)
+[![Norminette](https://github.com/Kodoque1/ft_philosophers/actions/workflows/norminette.yml/badge.svg)](https://github.com/Kodoque1/ft_philosophers/actions/workflows/norminette.yml)
+[![Sanitizers](https://github.com/Kodoque1/ft_philosophers/actions/workflows/sanitizers.yml/badge.svg)](https://github.com/Kodoque1/ft_philosophers/actions/workflows/sanitizers.yml)
+[![Static Analysis](https://github.com/Kodoque1/ft_philosophers/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/Kodoque1/ft_philosophers/actions/workflows/static-analysis.yml)
 
 ## About
 
@@ -29,16 +32,38 @@ make
 
 ## CI Pipeline
 
-The repository ships with a full CI pipeline under `.github/workflows/philo-ci.yml`.
+The repository ships with four focused CI workflows, each with its own badge.
+
+### `philo-ci.yml` — Core pipeline (build + functional tests)
 
 | Job | Description |
 |-----|-------------|
-| **Lint / Norminette** | Checks coding style with the official 42 norm checker |
 | **Build (none / thread / address)** | Compiles with no sanitizer, ThreadSanitizer, and AddressSanitizer |
 | **Functional tests** | Runs `philo-test.py` — validates all 5 dining-philosopher axioms and a stress loop |
 | **Mock POSIX** | Builds `tests/mock_posix.so` and injects `malloc` / `pthread_create` / `pthread_mutex_lock` failures |
-| **Sanitizers / Valgrind** | Runs the binary under ThreadSanitizer and Valgrind to catch races and leaks |
 | **Scheduler Mock (stress)** | Builds `tests/scheduler_mock.so`, runs `philo-test.py` with artificial delays to expose rare thread interleavings |
+
+### `norminette.yml` — Style check
+
+| Job | Description |
+|-----|-------------|
+| **Norminette** | Checks coding style with the official 42 norm checker |
+
+### `sanitizers.yml` — Volatility / memory-safety
+
+| Job | Description |
+|-----|-------------|
+| **ThreadSanitizer** | Detects data races at runtime |
+| **Valgrind** | Checks for memory errors and leaks |
+
+### `static-analysis.yml` — Static analysis
+
+> Style checking is owned by **Norminette** (`norminette.yml`). The static analysers below focus exclusively on bugs, security and performance — style checks are disabled to avoid conflicts with 42 Norm conventions.
+
+| Job | Description |
+|-----|-------------|
+| **cppcheck** | Bug-focused analysis: undefined behaviour, memory issues and performance hints (style category disabled) |
+| **clang-tidy** | Compiler-level checks for bugs, portability and cert/bugprone categories (style and modernize checks disabled) |
 
 Logs from failing jobs are uploaded as GitHub Actions artifacts for easy inspection.
 
