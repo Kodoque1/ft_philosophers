@@ -93,6 +93,143 @@ def parse_log_lines(output: str) -> List[dict]:
 # Individual axiom validators
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# PBT invariant validators (A–D from the evaluation sheet)
+# ---------------------------------------------------------------------------
+
+
+def invariant_death_precision(events: List[dict], time_to_die: int) -> bool:
+    """
+    Invariant A – Death Precision: the 'died' message timestamp must not
+    exceed (last_meal_ts + time_to_die + 10 ms).  If the philosopher never
+    ate, the simulation start time (first event) is used as the reference.
+    """
+    if not events:
+        ok("Invariant A (Death Precision): no events to check")
+        return True
+
+    start_ts = events[0]["ts"]
+    last_meal: dict = {}  # philo_id -> timestamp of most recent eating event
+    passed = True
+
+    for ev in events:
+        pid = ev["id"]
+        act = ev["action"].lower()
+        if "eating" in act:
+            last_meal[pid] = ev["ts"]
+        elif "died" in act:
+            ref_ts = last_meal.get(pid, start_ts)
+            deadline = ref_ts + time_to_die + 10
+            if ev["ts"] > deadline:
+                fail(
+                    f"Invariant A (Death Precision): philo {pid} death at "
+                    f"ts={ev['ts']} exceeds deadline {deadline} "
+                    f"(last_meal={ref_ts}, time_to_die={time_to_die})"
+                )
+                passed = False
+
+    if passed:
+        ok("Invariant A (Death Precision): all death timestamps within 10 ms tolerance")
+    return passed
+
+
+def invariant_no_ghost_actions(events: List[dict]) -> bool:
+    """
+    Invariant B – No Ghost Actions: once a 'died' message is logged, no
+    other status messages with a strictly later timestamp may appear.
+    """
+    death_events = [ev for ev in events if "died" in ev["action"].lower()]
+    if not death_events:
+        ok("Invariant B (No Ghost Actions): no deaths – nothing to check")
+        return True
+
+    first_death_ts = min(ev["ts"] for ev in death_events)
+    passed = True
+
+    for ev in events:
+        if "died" in ev["action"].lower():
+            continue
+        if ev["ts"] > first_death_ts:
+            fail(
+                f"Invariant B (No Ghost Actions): '{ev['action']}' by philo "
+                f"{ev['id']} at ts={ev['ts']} appears after first death at "
+                f"ts={first_death_ts}"
+            )
+            passed = False
+            break
+
+    if passed:
+        ok("Invariant B (No Ghost Actions): no events logged after first death")
+    return passed
+
+
+def invariant_fork_exclusivity(events: List[dict], num_philos: int) -> bool:
+    """
+    Invariant C – Fork Exclusivity: at any given moment a fork cannot be held
+    by two philosophers.  Adjacent philosophers (i and i±1 mod N) share a
+    fork, so they must never eat simultaneously.
+    """
+    eating: set = set()  # philosopher ids currently in the eating state
+    passed = True
+
+    for ev in events:
+        pid = ev["id"]
+        act = ev["action"].lower()
+        if "eating" in act:
+            left = (pid - 2) % num_philos + 1   # left neighbour
+            right = pid % num_philos + 1          # right neighbour
+            for neighbour in (left, right):
+                if neighbour in eating:
+                    fail(
+                        f"Invariant C (Fork Exclusivity): philo {pid} and philo "
+                        f"{neighbour} eat simultaneously at ts={ev['ts']} – fork stolen"
+                    )
+                    passed = False
+            eating.add(pid)
+        elif "sleeping" in act:
+            eating.discard(pid)
+
+    if passed:
+        ok("Invariant C (Fork Exclusivity): no fork held by two philosophers simultaneously")
+    return passed
+
+
+def invariant_completion(events: List[dict], num_philos: int, must_eat: int) -> bool:
+    """
+    Invariant D – Completion: when the must-eat argument is used, every
+    philosopher must eat at least `must_eat` times and no philosopher should
+    die (assuming safe timing parameters).
+    """
+    eat_counts: dict = {}
+    for ev in events:
+        if "eating" in ev["action"].lower():
+            eat_counts[ev["id"]] = eat_counts.get(ev["id"], 0) + 1
+
+    passed = True
+    for pid in range(1, num_philos + 1):
+        count = eat_counts.get(pid, 0)
+        if count < must_eat:
+            fail(
+                f"Invariant D (Completion): philo {pid} ate only {count}/{must_eat} times"
+            )
+            passed = False
+
+    deaths = [ev for ev in events if "died" in ev["action"].lower()]
+    if deaths:
+        fail(
+            f"Invariant D (Completion): philo {deaths[0]['id']} died unexpectedly "
+            f"at ts={deaths[0]['ts']} during must-eat scenario"
+        )
+        passed = False
+
+    if passed:
+        ok(
+            f"Invariant D (Completion): all {num_philos} philosophers ate "
+            f"≥{must_eat} times with no deaths"
+        )
+    return passed
+
+
 def axiom_resources(events: List[dict], num_philos: int) -> bool:
     """
     Axiom 1 – Resources: check that no two philosophers hold the same fork
@@ -210,6 +347,8 @@ def test_single_philosopher_dies(binary: str, timeout: float) -> bool:
     results = [
         axiom_time(events),
         axiom_death(events, time_to_die=800, expect_death=True),
+        invariant_death_precision(events, time_to_die=800),
+        invariant_no_ghost_actions(events),
     ]
     return all(results)
 
@@ -229,6 +368,8 @@ def test_no_death(binary: str, timeout: float) -> bool:
         axiom_death(events, time_to_die=800, expect_death=False),
         axiom_progress(events),
         axiom_fairness(events, 5),
+        invariant_fork_exclusivity(events, 5),
+        invariant_no_ghost_actions(events),
     ]
     return all(results)
 
@@ -252,17 +393,11 @@ def test_must_eat_count(binary: str, timeout: float) -> bool:
         axiom_time(events),
         axiom_death(events, time_to_die=800, expect_death=False),
         axiom_progress(events),
+        invariant_fork_exclusivity(events, 5),
+        invariant_no_ghost_actions(events),
+        invariant_completion(events, num_philos=5, must_eat=3),
     ]
     passed = all(results)
-
-    # All philosophers must have eaten at least 3 times
-    for pid in range(1, 6):
-        count = eat_counts.get(pid, 0)
-        if count < 3:
-            fail(f"Axiom 5 (Fairness/must-eat): philo {pid} only ate {count}/3 times")
-            passed = False
-    if passed:
-        ok("All 5 philosophers ate at least 3 times")
     return passed
 
 
@@ -280,6 +415,8 @@ def test_tight_timing(binary: str, timeout: float) -> bool:
         axiom_death(events, time_to_die=310, expect_death=False),
         axiom_progress(events),
         axiom_fairness(events, 4),
+        invariant_fork_exclusivity(events, 4),
+        invariant_no_ghost_actions(events),
     ]
     return all(results)
 
