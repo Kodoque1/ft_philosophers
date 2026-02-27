@@ -92,7 +92,7 @@ static int env_flag(const char *name)
 static int env_int(const char *name)
 {
     const char *v = getenv(name);
-    return v ? atoi(v) : -1;
+    return v ? ft_atoi(v) : -1;
 }
 
 /* Pseudo-random failure with a probability of roughly 1/20 (~5 %).

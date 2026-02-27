@@ -6,13 +6,13 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:30:56 by zaddi             #+#    #+#             */
-/*   Updated: 2026/02/26 18:04:52 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/02/27 22:02:04 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_philo.h"
 
-int	atoi(const char *str)
+int	ft_atoi(const char *str)
 {
 	int	result;
 	int	sign;
@@ -53,7 +53,7 @@ int	is_valid_number(const char *str)
 	return (1);
 }
 
-int get_current_time(void)
+int	get_current_time(void)
 {
 	struct timeval	tv;
 	long long		milliseconds;
@@ -63,26 +63,13 @@ int get_current_time(void)
 	return ((int)milliseconds);
 }
 
-int	fragmented_sleep(int milliseconds)
+int	ft_strlen(const char *str)
 {
-	long long	start_time;
-	long long	current_time;
+	int	len;
 
-	start_time = get_current_time();
-	while (1)
-	{
-		current_time = get_current_time();
-		if (current_time - start_time >= milliseconds)
-			break ;
-		usleep(100);
-	}
-	return (0);
+	len = 0;
+	while (str[len])
+		len++;
+	return (len);
 }
 
-int	concurent_print(const char *message, t_data *data)
-{
-	pthread_mutex_lock(&data->print_mutex);
-	printf("%s\n", message);
-	pthread_mutex_unlock(&data->print_mutex);
-	return (0);
-}

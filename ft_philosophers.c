@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:46:37 by zaddi             #+#    #+#             */
-/*   Updated: 2026/02/26 18:03:25 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/02/27 21:38:05 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,27 +36,23 @@ int	*philosophers(void *arg)
 			break ;
 		if (philosopher->id % 2 == 0)
 		{
-			// Even philosophers pick up the right fork first
+			pthread_mutex_lock(&philosopher->data->forks[philosopher->id - 1
+				% philosopher->data->num_philosophers]);
+			pthread_mutex_lock(&philosopher->data->forks[philosopher->id
+				% philosopher->data->num_philosophers]);
 		}
 		else
 		{
-			// Odd philosophers pick up the left fork first
+			pthread_mutex_lock(&philosopher->data->forks[philosopher->id
+				% philosopher->data->num_philosophers]);
+			pthread_mutex_lock(&philosopher->data->forks[philosopher->id - 1
+				% philosopher->data->num_philosophers]);
 		}
 	}
 	return (NULL);
 }
 
-int	*monitoring_thread(void *arg)
-{
-	t_data	*data;
 
-	data = (t_data *)arg;
-	while (1)
-	{
-		// Monitor philosophers' states and print status
-	}
-	return (NULL);
-}
 
 int	wait_for_philosophers(t_data *data)
 {
