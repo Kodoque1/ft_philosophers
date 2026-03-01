@@ -91,7 +91,15 @@ int	philo_print(int id, const char *message, t_data *data)
 		return (NOK);
 	buffer[len + 1] = ' ';
 	buffer[len + 2] = '\0';
-	if (concurent_print(buffer, data) == NOK)
+	if (is_sim_ended(data))
 		return (NOK);
-	return (concurent_print(message, data));
+	if (pthread_mutex_lock(&data->print_mutex) != 0)
+		return (NOK);
+	if (is_sim_ended(data))
+		return (pthread_mutex_unlock(&data->print_mutex), NOK);
+	write(STDOUT_FILENO, buffer, ft_strlen(buffer));
+	write(STDOUT_FILENO, message, ft_strlen(message));
+	write(STDOUT_FILENO, "\n", 1);
+	pthread_mutex_unlock(&data->print_mutex);
+	return (OK);
 }
