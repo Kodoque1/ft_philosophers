@@ -16,8 +16,6 @@ int	philo_eat(t_philosopher *philo)
 {
 	int	current_time;
 
-	if (philo_print(philo->id, "is eating", philo->data) == NOK)
-		return (end_simulation(philo->data), NOK);
 	current_time = get_current_time();
 	if (current_time == -1)
 		return (concurent_print("Error: Failed to get current time.",
@@ -26,6 +24,8 @@ int	philo_eat(t_philosopher *philo)
 	philo->last_meal_time = current_time;
 	philo->times_eaten++;
 	pthread_mutex_unlock(&philo->meal_mutex);
+	if (philo_print(philo->id, "is eating", philo->data) == NOK)
+		return (end_simulation(philo->data), NOK);
 	fragmented_sleep(philo->data->time_to_eat, philo->data);
 	if (is_sim_ended(philo->data))
 		return (NOK);
@@ -92,6 +92,9 @@ void	*philosophers(void *arg)
 		release_forks(philo);
 		if (philo_sleep(philo) == NOK)
 			return (NULL);
+		if (philo->data->num_philosophers % 2 != 0)
+			if (fragmented_sleep(philo->data->time_to_eat, philo->data) == NOK)
+				return (NULL);
 	}
 	return (NULL);
 }

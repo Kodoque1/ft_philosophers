@@ -368,17 +368,17 @@ def test_single_philosopher_dies(binary: str, timeout: float) -> bool:
 
 def test_no_death(binary: str, timeout: float) -> bool:
     """
-    5 philosophers, 1000ms to die, 200ms to eat, 200ms to sleep.
+    5 philosophers, 800ms to die, 200ms to eat, 200ms to sleep.
     No philosopher should die; all should eat.
     """
-    print("\n[Test] No philosopher should die (5 philos, enough time)")
+    print("\n[Test] No philosopher should die (5 philos, 800ms die)")
     # Run for a bounded time then check partial output
-    rc, stdout, _ = run_philo(binary, [5, 1000, 200, 200], min(timeout, 5.0))
+    rc, stdout, _ = run_philo(binary, [5, 800, 200, 200], min(timeout, 5.0))
     events = parse_log_lines(stdout)
     results = [
         axiom_resources(events, 5),
         axiom_time(events),
-        axiom_death(events, time_to_die=1000, expect_death=False),
+        axiom_death(events, time_to_die=800, expect_death=False),
         axiom_progress(events),
         axiom_fairness(events, 5),
         invariant_fork_exclusivity(events, 5),
@@ -389,11 +389,11 @@ def test_no_death(binary: str, timeout: float) -> bool:
 
 def test_must_eat_count(binary: str, timeout: float) -> bool:
     """
-    5 philosophers with must-eat count of 3.
-    The simulation should stop after each philosopher has eaten 3 times.
+    5 philosophers with must-eat count of 7 (spec test case).
+    The simulation should stop after each philosopher has eaten 7 times.
     """
-    print("\n[Test] Simulation stops after each philo eats 3 times")
-    rc, stdout, _ = run_philo(binary, [5, 1000, 200, 200, 3], timeout)
+    print("\n[Test] Simulation stops after each philo eats 7 times")
+    rc, stdout, _ = run_philo(binary, [5, 800, 200, 200, 7], timeout)
     events = parse_log_lines(stdout)
     eat_counts: dict = {}
     for ev in events:
@@ -404,14 +404,34 @@ def test_must_eat_count(binary: str, timeout: float) -> bool:
     results = [
         axiom_resources(events, 5),
         axiom_time(events),
-        axiom_death(events, time_to_die=1000, expect_death=False),
+        axiom_death(events, time_to_die=800, expect_death=False),
         axiom_progress(events),
         invariant_fork_exclusivity(events, 5),
         invariant_no_ghost_actions(events),
-        invariant_completion(events, num_philos=5, must_eat=3),
+        invariant_completion(events, num_philos=5, must_eat=7),
     ]
     passed = all(results)
     return passed
+
+
+def test_four_ten_ms(binary: str, timeout: float) -> bool:
+    """
+    4 philosophers, 410ms to die, 200ms to eat, 200ms to sleep.
+    No philosopher should die (spec test case).
+    """
+    print("\n[Test] No philosopher should die (4 philos, 410ms die)")
+    rc, stdout, _ = run_philo(binary, [4, 410, 200, 200], min(timeout, 5.0))
+    events = parse_log_lines(stdout)
+    results = [
+        axiom_resources(events, 4),
+        axiom_time(events),
+        axiom_death(events, time_to_die=410, expect_death=False),
+        axiom_progress(events),
+        axiom_fairness(events, 4),
+        invariant_fork_exclusivity(events, 4),
+        invariant_no_ghost_actions(events),
+    ]
+    return all(results)
 
 
 def test_tight_timing(binary: str, timeout: float) -> bool:
@@ -469,7 +489,7 @@ def stress_loop(binary: str, iterations: int, timeout: float) -> bool:
     print(f"\n[Stress] Running {iterations} iterations of no-death test …")
     passed = True
     for i in range(1, iterations + 1):
-        rc, stdout, _ = run_philo(binary, [5, 1000, 200, 200], min(timeout, 4.0))
+        rc, stdout, _ = run_philo(binary, [5, 800, 200, 200], min(timeout, 4.0))
         events = parse_log_lines(stdout)
         deaths = [ev for ev in events if "died" in ev["action"].lower()]
 
@@ -526,6 +546,7 @@ def main() -> int:
         test_single_philosopher_dies(args.binary, args.timeout),
         test_no_death(args.binary, args.timeout),
         test_must_eat_count(args.binary, args.timeout),
+        test_four_ten_ms(args.binary, args.timeout),
         test_tight_timing(args.binary, args.timeout),
         stress_loop(args.binary, args.stress_iterations, args.timeout),
     ]
