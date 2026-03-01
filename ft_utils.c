@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:30:56 by zaddi             #+#    #+#             */
-/*   Updated: 2026/02/27 22:02:04 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 17:30:09 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,38 @@ int	ft_atoi(const char *str)
 	return (result * sign);
 }
 
+int	ft_itoa(int n, char *buffer, int buffer_size)
+{
+	int		i;
+	int		is_negative;
+	char	temp;
+
+	if (buffer_size < 2)
+		return (-1);
+	is_negative = 0;
+	if (n < 0)
+	{
+		is_negative = 1;
+		n = -n;
+	}
+	i = 0;
+	while (n > 0 && i < buffer_size - 1)
+	{
+		buffer[i++] = (n % 10) + '0';
+		n /= 10;
+	}
+	if (is_negative && i < buffer_size - 1)
+		buffer[i++] = '-';
+	buffer[i] = '\0';
+	for (int j = 0; j < i / 2; j++)
+	{
+		temp = buffer[j];
+		buffer[j] = buffer[i - j - 1];
+		buffer[i - j - 1] = temp;
+	}
+	return (0);
+}
+
 int	is_valid_number(const char *str)
 {
 	int	i;
@@ -58,7 +90,8 @@ int	get_current_time(void)
 	struct timeval	tv;
 	long long		milliseconds;
 
-	gettimeofday(&tv, NULL);
+	if (gettimeofday(&tv, NULL) == -1)
+		return (-1);
 	milliseconds = (tv.tv_sec * 1000LL) + (tv.tv_usec / 1000LL);
 	return ((int)milliseconds);
 }
@@ -72,4 +105,3 @@ int	ft_strlen(const char *str)
 		len++;
 	return (len);
 }
-

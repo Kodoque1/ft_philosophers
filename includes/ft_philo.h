@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:26:24 by zaddi             #+#    #+#             */
-/*   Updated: 2026/02/27 22:01:44 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 17:22:30 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,19 +19,24 @@
 # include <sys/time.h>
 # include <unistd.h>
 
-typedef struct s_philosopher
-{
-	int				id;
-	int				times_eaten;
-	pthread_t		thread;
-	t_data			*data;
-}					t_philosopher;
+#define INT_SIZE 12
 
 typedef enum return_code
 {
 	OK,
 	NOK
 }					t_return_code;
+
+typedef struct s_data	t_data;
+
+typedef struct s_philosopher
+{
+	int				id;
+	int				times_eaten;
+	int				last_meal_time;
+	pthread_t		thread;
+	t_data			*data;
+}					t_philosopher;
 
 typedef struct s_data
 {
@@ -43,7 +48,8 @@ typedef struct s_data
 	t_philosopher	*philosophers;
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	print_mutex;
-	int				someone_died;
+	int				simulation_ended;
+	int				start_time;
 }					t_data;
 
 typedef struct s_monitor
@@ -66,5 +72,9 @@ int					*monitoring_thread(void *arg);
 int					get_current_time(void);
 int					fragmented_sleep(int milliseconds);
 int					ft_strlen(const char *str);
+int					lock_fork(pthread_mutex_t *fork, t_data *data);
+int					acquire_forks(t_philosopher *philo, int first, int second);
+void				release_forks(t_philosopher *philo);
+int					philo_eat(t_philosopher *philo);
 
-#endif FT_PHILO_H
+#endif
