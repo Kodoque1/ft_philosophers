@@ -43,9 +43,11 @@ void	cleanup_data(t_data *data)
 	while (i < data->num_philosophers)
 	{
 		pthread_mutex_destroy(&data->forks[i]);
+		pthread_mutex_destroy(&data->philosophers[i].meal_mutex);
 		i++;
 	}
 	pthread_mutex_destroy(&data->print_mutex);
+	pthread_mutex_destroy(&data->death_mutex);
 	free(data->philosophers);
 	free(data->forks);
 }

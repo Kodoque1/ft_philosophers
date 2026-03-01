@@ -26,7 +26,7 @@ int	start_philosophers(t_data *data, void *(*philosopher_routine)(void *))
 		if (pthread_create(&data->philosophers[i].thread, NULL,
 				philosopher_routine, &data->philosophers[i]) != 0)
 		{
-			data->simulation_ended = 1;
+			end_simulation(data);
 			while (--i >= 0)
 				pthread_join(data->philosophers[i].thread, NULL);
 			return (NOK);

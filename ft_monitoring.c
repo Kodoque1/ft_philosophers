@@ -23,7 +23,7 @@ int	start_monitoring_thread(t_data *data, void *(*monitoring_routine)(void *))
 		return (NOK);
 	if (pthread_detach(monitoring_thread) != 0)
 	{
-		data->simulation_ended = 1;
+		end_simulation(data);
 		pthread_join(monitoring_thread, NULL);
 		return (NOK);
 	}
@@ -40,12 +40,12 @@ void	*monitoring_thread(void *arg)
 		if (check_philosopher_death(data) || (data->num_times_must_eat != -1
 				&& check_all_philosophers_full(data)))
 		{
-			data->simulation_ended = 1;
+			end_simulation(data);
 			return (NULL);
 		}
 		if (usleep(1000) == -1)
 		{
-			data->simulation_ended = 1;
+			end_simulation(data);
 			return (NULL);
 		}
 	}
@@ -55,11 +55,15 @@ void	*monitoring_thread(void *arg)
 static int	check_all_philosophers_full(t_data *data)
 {
 	int	i;
+	int	times_eaten;
 
 	i = 0;
 	while (i < data->num_philosophers)
 	{
-		if (data->philosophers[i].times_eaten < data->num_times_must_eat)
+		pthread_mutex_lock(&data->philosophers[i].meal_mutex);
+		times_eaten = data->philosophers[i].times_eaten;
+		pthread_mutex_unlock(&data->philosophers[i].meal_mutex);
+		if (times_eaten < data->num_times_must_eat)
 			return (0);
 		i++;
 	}
@@ -70,6 +74,7 @@ static int	check_philosopher_death(t_data *data)
 {
 	int	i;
 	int	current_time;
+	int	last_meal;
 
 	i = 0;
 	current_time = get_current_time();
@@ -77,8 +82,10 @@ static int	check_philosopher_death(t_data *data)
 		return (1);
 	while (i < data->num_philosophers)
 	{
-		if (current_time
-			- data->philosophers[i].last_meal_time >= data->time_to_die)
+		pthread_mutex_lock(&data->philosophers[i].meal_mutex);
+		last_meal = data->philosophers[i].last_meal_time;
+		pthread_mutex_unlock(&data->philosophers[i].meal_mutex);
+		if (current_time - last_meal >= data->time_to_die)
 		{
 			philo_print(i + 1, "died", data);
 			return (1);

@@ -17,11 +17,14 @@ int	lock_fork(pthread_mutex_t *fork, t_philosopher *philo, t_data *data)
 	if (pthread_mutex_lock(fork) != 0)
 	{
 		concurent_print("Error: Failed to lock fork mutex.", data);
-		data->simulation_ended = 1;
+		end_simulation(data);
 		return (NOK);
 	}
 	if (philo_print(philo->id, "has taken a fork", data) == NOK)
+	{
+		pthread_mutex_unlock(fork);
 		return (NOK);
+	}
 	return (OK);
 }
 
@@ -30,7 +33,7 @@ int	unlock_fork(pthread_mutex_t *fork, t_data *data)
 	if (pthread_mutex_unlock(fork) != 0)
 	{
 		concurent_print("Error: Failed to unlock fork mutex.", data);
-		data->simulation_ended = 1;
+		end_simulation(data);
 		return (NOK);
 	}
 	return (OK);
@@ -41,7 +44,10 @@ int	acquire_forks(t_philosopher *philo, int first, int second)
 	if (lock_fork(&philo->data->forks[first], philo, philo->data) == NOK)
 		return (NOK);
 	if (lock_fork(&philo->data->forks[second], philo, philo->data) == NOK)
+	{
+		pthread_mutex_unlock(&philo->data->forks[first]);
 		return (NOK);
+	}
 	return (OK);
 }
 
