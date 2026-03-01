@@ -6,11 +6,21 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:17:26 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 18:31:49 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 23:39:19 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_philo.h"
+
+int	ft_strlen(const char *str)
+{
+	int	len;
+
+	len = 0;
+	while (str[len])
+		len++;
+	return (len);
+}
 
 int	validate_args(int argc, char **argv)
 {

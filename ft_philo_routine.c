@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/01 17:00:00 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 18:31:49 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 23:39:28 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,52 +49,45 @@ static int	philo_sleep(t_philosopher *philo)
 	return (OK);
 }
 
-static void	get_fork_indices(t_philosopher *philo, int *first, int *second)
+static int	philo_cycle(t_philosopher *philo)
 {
-	*first = (philo->id - 1) % philo->data->num_philosophers;
-	*second = philo->id % philo->data->num_philosophers;
-	if (philo->id % 2 != 0)
+	if (philo_think(philo) == NOK)
+		return (NOK);
+	if (is_sim_ended(philo->data))
+		return (NOK);
+	if (philo->data->num_philosophers == 1)
 	{
-		*first = philo->id % philo->data->num_philosophers;
-		*second = (philo->id - 1) % philo->data->num_philosophers;
+		while (!is_sim_ended(philo->data))
+			usleep(1000);
+		return (NOK);
 	}
+	if (acquire_forks(philo) == NOK)
+		return (NOK);
+	if (philo_eat(philo) == NOK)
+		return (release_forks(philo), NOK);
+	release_forks(philo);
+	if (philo_sleep(philo) == NOK)
+		return (NOK);
+	if (philo->data->num_philosophers % 2 != 0)
+		if (fragmented_sleep(philo->data->time_to_eat / 2, philo->data) == NOK)
+			return (NOK);
+	return (OK);
 }
 
 void	*philosophers(void *arg)
 {
 	t_philosopher	*philo;
-	int				first;
-	int				second;
 
 	philo = (t_philosopher *)arg;
 	if (philo->data->num_philosophers > 1 && philo->id % 2 == 0)
-		usleep(philo->data->time_to_eat * 1000); /* stagger even philos */
+		fragmented_sleep(philo->data->time_to_eat, philo->data);
 	while (1)
 	{
 		if (philo->data->num_times_must_eat != -1
 			&& philo->times_eaten >= philo->data->num_times_must_eat)
 			break ;
-		if (philo_think(philo) == NOK)
+		if (philo_cycle(philo) == NOK)
 			return (NULL);
-		if (is_sim_ended(philo->data))
-			return (NULL);
-		if (philo->data->num_philosophers == 1)
-		{
-			while (!is_sim_ended(philo->data))
-				usleep(1000);
-			return (NULL);
-		}
-		get_fork_indices(philo, &first, &second);
-		if (acquire_forks(philo, first, second) == NOK)
-			return (NULL);
-		if (philo_eat(philo) == NOK)
-			return (release_forks(philo), NULL);
-		release_forks(philo);
-		if (philo_sleep(philo) == NOK)
-			return (NULL);
-		if (philo->data->num_philosophers % 2 != 0)
-			if (fragmented_sleep(philo->data->time_to_eat, philo->data) == NOK)
-				return (NULL);
 	}
 	return (NULL);
 }

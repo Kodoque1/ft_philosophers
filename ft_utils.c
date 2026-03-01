@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:30:56 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 18:31:49 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 23:39:18 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,12 +37,25 @@ int	ft_atoi(const char *str)
 	return (result * sign);
 }
 
+static void	ft_reverse(char *buffer, int len)
+{
+	int		j;
+	char	temp;
+
+	j = 0;
+	while (j < len / 2)
+	{
+		temp = buffer[j];
+		buffer[j] = buffer[len - j - 1];
+		buffer[len - j - 1] = temp;
+		j++;
+	}
+}
+
 int	ft_itoa(int n, char *buffer, int buffer_size)
 {
 	int		i;
 	int		is_negative;
-	char	temp;
-	int		j;
 
 	if (buffer_size < 2)
 		return (-1);
@@ -60,14 +73,7 @@ int	ft_itoa(int n, char *buffer, int buffer_size)
 	if (is_negative && i < buffer_size - 1)
 		buffer[i++] = '-';
 	buffer[i] = '\0';
-	j = 0;
-	while (j < i / 2)
-	{
-		temp = buffer[j];
-		buffer[j] = buffer[i - j - 1];
-		buffer[i - j - 1] = temp;
-		j++;
-	}
+	ft_reverse(buffer, i);
 	return (i);
 }
 
@@ -98,12 +104,4 @@ int	get_current_time(void)
 	return ((int)milliseconds);
 }
 
-int	ft_strlen(const char *str)
-{
-	int	len;
 
-	len = 0;
-	while (str[len])
-		len++;
-	return (len);
-}

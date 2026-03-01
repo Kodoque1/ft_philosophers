@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:30:56 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 18:31:49 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 23:39:20 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,59 +47,4 @@ int	fragmented_sleep(int milliseconds, t_data *data)
 	return (OK);
 }
 
-int	concurent_print(const char *message, t_data *data)
-{
-	if (is_sim_ended(data))
-		return (NOK);
-	if (pthread_mutex_lock(&data->print_mutex) != 0)
-		return (NOK);
-	if (is_sim_ended(data))
-		return (pthread_mutex_unlock(&data->print_mutex), NOK);
-	write(STDOUT_FILENO, message, ft_strlen(message));
-	write(STDOUT_FILENO, "\n", 1);
-	pthread_mutex_unlock(&data->print_mutex);
-	return (OK);
-}
 
-int	timestamp(t_data *data)
-{
-	int	current_time;
-
-	current_time = get_current_time();
-	if (current_time == -1)
-		return (-1);
-	return (current_time - data->start_time);
-}
-
-int	philo_print(int id, const char *message, t_data *data)
-{
-	int		len;
-	char	buffer[INT_SIZE * 2 + 3];
-	int		ts;
-
-	if (is_sim_ended(data))
-		return (NOK);
-	ts = get_current_time() - data->start_time;
-	if (ts == -1)
-		return (NOK);
-	len = ft_itoa(ts, buffer, sizeof(buffer));
-	if (len == -1)
-		return (NOK);
-	buffer[len] = ' ';
-	len += ft_itoa(id, buffer + len + 1, (int)sizeof(buffer) - len - 1);
-	if (len == -1)
-		return (NOK);
-	buffer[len + 1] = ' ';
-	buffer[len + 2] = '\0';
-	if (is_sim_ended(data))
-		return (NOK);
-	if (pthread_mutex_lock(&data->print_mutex) != 0)
-		return (NOK);
-	if (is_sim_ended(data))
-		return (pthread_mutex_unlock(&data->print_mutex), NOK);
-	write(STDOUT_FILENO, buffer, ft_strlen(buffer));
-	write(STDOUT_FILENO, message, ft_strlen(message));
-	write(STDOUT_FILENO, "\n", 1);
-	pthread_mutex_unlock(&data->print_mutex);
-	return (OK);
-}

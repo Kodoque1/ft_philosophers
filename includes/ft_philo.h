@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:26:24 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 18:31:49 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 23:39:26 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,7 +80,7 @@ int					fragmented_sleep(int milliseconds, t_data *data);
 int					ft_strlen(const char *str);
 int					lock_fork(pthread_mutex_t *fork, t_philosopher *philo,
 						t_data *data);
-int					acquire_forks(t_philosopher *philo, int first, int second);
+int					acquire_forks(t_philosopher *philo);
 int					release_forks(t_philosopher *philo);
 int					philo_eat(t_philosopher *philo);
 int					start_monitoring_thread(t_data *data,
