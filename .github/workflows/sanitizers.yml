@@ -70,45 +70,91 @@ jobs:
         if: matrix.tool == 'valgrind'
         run: sudo apt-get install -y --no-install-recommends valgrind
 
-      - name: Run under ${{ matrix.tool }}
-        id: san_run
+      # -----------------------------------------------------------------------
+      # ThreadSanitizer: run the full philo-test.py suite against the
+      # TSan-instrumented binary.  This gives two independent layers of
+      # coverage in a single pass:
+      #   • philo-test.py checks the 5 dining-philosopher axioms and the
+      #     PBT invariants (timing, ghost actions, fork exclusivity, …)
+      #   • TSan detects unsynchronised memory accesses triggered by those
+      #     exact same test scenarios
+      # Without philo-test.py, TSan would only exercise one hard-coded
+      # scenario for 6 s; with it, TSan inspects every code path that the
+      # invariant suite exercises.
+      # --stress-iterations 3: fewer than the default 5 to keep total CI
+      # time reasonable under TSan's ~2–5× execution overhead.
+      # -----------------------------------------------------------------------
+      - name: Run under tsan (philo-test.py + TSan)
+        if: matrix.tool == 'tsan'
+        id: tsan_run
         run: |
           set +e
-          if [ "${{ matrix.tool }}" = "tsan" ]; then
-            TSAN_OPTIONS="halt_on_error=0 log_path=tsan.log" \
-              ./philo 5 800 200 200 &
-            PID=$!
-            sleep 6
-            kill $PID 2>/dev/null || true
-            wait $PID 2>/dev/null || true
-            cat tsan.log* 2>/dev/null | tee sanitizer-tsan.log
-            if grep -q "DATA RACE\|WARNING: ThreadSanitizer" sanitizer-tsan.log 2>/dev/null; then
-              echo "::error::ThreadSanitizer detected data races!"
-              echo "exit_code=1" >> "$GITHUB_OUTPUT"
-            else
-              echo "::notice::No ThreadSanitizer issues detected"
-              echo "exit_code=0" >> "$GITHUB_OUTPUT"
-            fi
+          TSAN_OPTIONS="halt_on_error=0 log_path=tsan.log" \
+            python3 philo-test.py \
+              --binary ./philo \
+              --timeout ${{ env.TEST_TIMEOUT }} \
+              --stress-iterations 3 \
+              2>&1 | tee sanitizer-tsan.log
+          PHILO_EXIT=$?
+          # Append any TSan report lines to the combined log.
+          cat tsan.log* 2>/dev/null >> sanitizer-tsan.log || true
+          RACE=0
+          if grep -q "DATA RACE\|WARNING: ThreadSanitizer" tsan.log* 2>/dev/null; then
+            echo "::error::ThreadSanitizer detected data races!"
+            RACE=1
           else
-            valgrind \
-              --tool=memcheck \
-              --leak-check=full \
-              --error-exitcode=1 \
-              --log-file=sanitizer-valgrind.log \
-              ./philo 4 310 200 100 &
-            PID=$!
-            sleep 6
-            kill $PID 2>/dev/null || true
-            wait $PID 2>/dev/null || true
-            cat sanitizer-valgrind.log
-            if grep -qE "ERROR SUMMARY: [1-9][0-9]* error" sanitizer-valgrind.log; then
-              echo "::error::Valgrind reported memory errors!"
-              echo "exit_code=1" >> "$GITHUB_OUTPUT"
-            else
-              echo "::notice::No Valgrind memory errors detected"
-              echo "exit_code=0" >> "$GITHUB_OUTPUT"
-            fi
+            echo "::notice::No ThreadSanitizer issues detected"
           fi
+          if [ "$PHILO_EXIT" != "0" ]; then
+            echo "::error::philo-test.py reported invariant failures under TSan."
+          fi
+          # Fail if either TSan or philo-test.py found a problem.
+          echo "exit_code=$(( RACE | PHILO_EXIT ))" >> "$GITHUB_OUTPUT"
+          set -e
+
+      # -----------------------------------------------------------------------
+      # Valgrind: memory-error check.  Valgrind adds ~10–30× execution
+      # overhead which would cause wall-clock timing invariants to fire
+      # spuriously, so philo-test.py's timing-sensitive tests are not used
+      # here.  Instead, run a few representative scenarios manually and
+      # inspect the Valgrind log for real memory errors.
+      # -----------------------------------------------------------------------
+      - name: Run under valgrind (memory check)
+        if: matrix.tool == 'valgrind'
+        id: valgrind_run
+        run: |
+          set +e
+          # Scenario 1: no-death (5 philos, 800 ms budget) – run for 6 s
+          valgrind \
+            --tool=memcheck \
+            --leak-check=full \
+            --log-file=valgrind-1.log \
+            ./philo 5 800 200 200 &
+          PID1=$!
+          sleep 6
+          kill $PID1 2>/dev/null || true
+          wait $PID1 2>/dev/null || true
+          # Scenario 2: must-eat (terminates naturally, easier to collect leaks)
+          valgrind \
+            --tool=memcheck \
+            --leak-check=full \
+            --log-file=valgrind-2.log \
+            ./philo 5 800 200 200 3
+          # Scenario 3: single philosopher (must die)
+          valgrind \
+            --tool=memcheck \
+            --leak-check=full \
+            --log-file=valgrind-3.log \
+            ./philo 1 800 200 200
+          cat valgrind-*.log | tee sanitizer-valgrind.log
+          MEM_ERR=0
+          if grep -qE "ERROR SUMMARY: [1-9][0-9]* error" valgrind-*.log 2>/dev/null; then
+            echo "::error::Valgrind reported memory errors!"
+            MEM_ERR=1
+          else
+            echo "::notice::No Valgrind memory errors detected"
+          fi
+          echo "exit_code=$MEM_ERR" >> "$GITHUB_OUTPUT"
           set -e
 
       - name: Upload sanitizer log
@@ -120,7 +166,9 @@ jobs:
           if-no-files-found: ignore
 
       - name: Assert sanitizer result
-        if: steps.san_run.outputs.exit_code != '0'
         run: |
-          echo "::error::Sanitizer/Valgrind reported issues. See sanitizer-${{ matrix.tool }}-log artifact."
-          exit 1
+          CODE=${{ steps.tsan_run.outputs.exit_code || steps.valgrind_run.outputs.exit_code }}
+          if [ "$CODE" != "0" ]; then
+            echo "::error::Sanitizer/Valgrind reported issues. See sanitizer-${{ matrix.tool }}-log artifact."
+            exit 1
+          fi

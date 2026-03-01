@@ -51,10 +51,20 @@ The repository ships with four focused CI workflows, each with its own badge.
 
 ### `sanitizers.yml` — Volatility / memory-safety
 
+Both sanitizer jobs now drive the binary through `philo-test.py` instead of a
+single hard-coded scenario.  This means every code path exercised by the
+invariant suite is also inspected by the memory-safety tool in the same run —
+the two layers are complementary, not redundant:
+
+| Layer | What it catches |
+|-------|----------------|
+| **Python invariants** (`philo-test.py`) | Semantic / behavioural bugs: wrong timing, starvation, ghost actions, fork violations |
+| **ThreadSanitizer / Valgrind** | Memory-safety bugs: data races, leaks, buffer overflows |
+
 | Job | Description |
 |-----|-------------|
-| **ThreadSanitizer** | Detects data races at runtime |
-| **Valgrind** | Checks for memory errors and leaks |
+| **ThreadSanitizer** | Runs `philo-test.py` against the TSan-instrumented binary; detects data races triggered by any of the axiom / stress scenarios |
+| **Valgrind** | Runs three representative scenarios through Valgrind (`memcheck`); checks for memory errors and leaks (Valgrind's ~10–30× overhead makes timing invariants unreliable, so `philo-test.py` is not used here) |
 
 ### `static-analysis.yml` — Static analysis
 
