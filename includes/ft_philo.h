@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:26:24 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 23:51:26 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/02 00:13:31 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,8 +70,7 @@ int					ft_atoi(const char *str);
 int					ft_itoa(int n, char *buffer, int buffer_size);
 int					is_valid_number(const char *str);
 int					init_data(t_data *data, char **argv);
-int					start_philosophers(t_data *data,
-						void *(*philosopher_routine)(void *));
+int					start_philosophers(t_data *data);
 int					wait_for_philosophers(t_data *data);
 int					concurent_print(const char *message, t_data *data);
 int					philo_print(int id, const char *message, t_data *data);
@@ -86,7 +85,6 @@ int					lock_fork(pthread_mutex_t *fork, t_philosopher *philo,
 int					acquire_forks(t_philosopher *philo);
 int					release_forks(t_philosopher *philo);
 int					philo_eat(t_philosopher *philo);
-int					start_monitoring_thread(t_data *data,
-						void *(*monitoring_routine)(void *));
+int					start_monitoring_thread(t_data *data);
 
 #endif

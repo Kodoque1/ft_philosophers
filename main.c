@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:17:26 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 23:51:23 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/02 00:12:03 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,21 +77,16 @@ void	cleanup_data(t_data *data)
 int	main(int argc, char **argv)
 {
 	t_data	data;
+	int		status;
 
 	data = (t_data){0};
+	status = -1;
 
-	if (validate_args(argc, argv) == OK && init_data(&data, argv) == OK)
-	{
-		if (start_philosophers(&data, philosophers) == NOK
-			|| start_monitoring_thread(&data, monitoring_thread) == NOK
-			|| wait_for_philosophers(&data) == NOK)
-		{
-			cleanup_data(&data);
-			return (-1);
-		}
-	}
-	else
-		return (-1);
+	if (validate_args(argc, argv) == OK && init_data(&data, argv) == OK
+		&& start_philosophers(&data) == OK
+		&& start_monitoring_thread(&data) == OK
+		&& wait_for_philosophers(&data) == OK)
+		status = 0;
 	cleanup_data(&data);
-	return (0);
+	return (status);
 }
