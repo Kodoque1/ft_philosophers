@@ -67,6 +67,8 @@ void	*philosophers(void *arg)
 	int				second;
 
 	philo = (t_philosopher *)arg;
+	if (philo->data->num_philosophers > 1 && philo->id % 2 == 0)
+		usleep(philo->data->time_to_eat * 1000);
 	while (1)
 	{
 		if (philo->data->num_times_must_eat != -1
@@ -77,7 +79,11 @@ void	*philosophers(void *arg)
 		if (is_sim_ended(philo->data))
 			return (NULL);
 		if (philo->data->num_philosophers == 1)
-			return (fragmented_sleep(philo->data->time_to_die, philo->data), NULL);
+		{
+			while (!is_sim_ended(philo->data))
+				usleep(1000);
+			return (NULL);
+		}
 		get_fork_indices(philo, &first, &second);
 		if (acquire_forks(philo, first, second) == NOK)
 			return (NULL);
