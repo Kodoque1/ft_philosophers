@@ -6,12 +6,14 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:26:24 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/02 00:13:31 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/02 00:18:58 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef FT_PHILO_H
 # define FT_PHILO_H
+
+# define _DEFAULT_SOURCE
 
 # include <pthread.h>
 # include <stdio.h>
