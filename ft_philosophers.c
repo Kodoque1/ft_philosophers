@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:46:37 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/02 00:13:31 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/02 00:36:39 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,6 +86,9 @@ int	start_philosophers(t_data *data)
 		}
 		i++;
 	}
+	pthread_mutex_lock(&data->start_mutex);
+	data->all_philosophers_ready = 1;
+	pthread_mutex_unlock(&data->start_mutex);
 	return (OK);
 }
 

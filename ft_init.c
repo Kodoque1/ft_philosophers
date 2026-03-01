@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/27 21:55:46 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/02 00:07:59 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/02 00:36:39 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@ static void	init_cleanup_state(t_data *data)
 	data->initialized_philos = 0;
 	data->print_mutex_initialized = 0;
 	data->death_mutex_initialized = 0;
+	data->start_mutex_initialized = 0;
+	data->all_philosophers_ready = 0;
 	data->simulation_ended = 0;
 	data->start_time = 0;
 }
@@ -85,5 +87,8 @@ int	init_data(t_data *data, char **argv)
 	if (pthread_mutex_init(&data->death_mutex, NULL) != 0)
 		return (NOK);
 	data->death_mutex_initialized = 1;
+	if (pthread_mutex_init(&data->start_mutex, NULL) != 0)
+		return (NOK);
+	data->start_mutex_initialized = 1;
 	return (OK);
 }

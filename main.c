@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:17:26 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/02 00:12:03 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/02 00:36:39 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,6 +65,8 @@ void	cleanup_data(t_data *data)
 		pthread_mutex_destroy(&data->print_mutex);
 	if (data->death_mutex_initialized)
 		pthread_mutex_destroy(&data->death_mutex);
+	if (data->start_mutex_initialized)
+		pthread_mutex_destroy(&data->start_mutex);
 	free(data->philosophers);
 	free(data->forks);
 	data->philosophers = NULL;
@@ -72,6 +74,7 @@ void	cleanup_data(t_data *data)
 	data->initialized_philos = 0;
 	data->print_mutex_initialized = 0;
 	data->death_mutex_initialized = 0;
+	data->start_mutex_initialized = 0;
 }
 
 int	main(int argc, char **argv)
