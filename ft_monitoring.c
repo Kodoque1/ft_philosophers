@@ -6,11 +6,14 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/27 21:38:20 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 16:44:52 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 18:31:49 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_philo.h"
+
+static int	check_philosopher_death(t_data *data);
+static int	check_all_philosophers_full(t_data *data);
 
 int	start_monitoring_thread(t_data *data, void *(*monitoring_routine)(void *))
 {
@@ -19,18 +22,19 @@ int	start_monitoring_thread(t_data *data, void *(*monitoring_routine)(void *))
 	if (pthread_create(&monitoring_thread, NULL, monitoring_routine, data) != 0)
 		return (NOK);
 	if (pthread_detach(monitoring_thread) != 0)
+	{
+		data->simulation_ended = 1;
+		pthread_join(monitoring_thread, NULL);
 		return (NOK);
+	}
 	return (OK);
 }
 
-int	*monitoring_thread(void *arg)
+void	*monitoring_thread(void *arg)
 {
 	t_data	*data;
-	int		i;
-	int		all_full;
 
 	data = (t_data *)arg;
-	i = 0;
 	while (1)
 	{
 		if (check_philosopher_death(data) || (data->num_times_must_eat != -1
@@ -48,7 +52,7 @@ int	*monitoring_thread(void *arg)
 	return (NULL);
 }
 
-int	check_all_philosophers_full(t_data *data)
+static int	check_all_philosophers_full(t_data *data)
 {
 	int	i;
 
@@ -62,7 +66,7 @@ int	check_all_philosophers_full(t_data *data)
 	return (1);
 }
 
-int	check_philosopher_death(t_data *data)
+static int	check_philosopher_death(t_data *data)
 {
 	int	i;
 	int	current_time;
@@ -75,7 +79,10 @@ int	check_philosopher_death(t_data *data)
 	{
 		if (current_time
 			- data->philosophers[i].last_meal_time >= data->time_to_die)
+		{
+			philo_print(i + 1, "died", data);
 			return (1);
+		}
 		i++;
 	}
 	return (0);

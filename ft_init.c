@@ -6,11 +6,13 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/27 21:55:46 by zaddi             #+#    #+#             */
-/*   Updated: 2026/02/27 23:04:04 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 18:31:49 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_philo.h"
+
+static int	parse_arguments(t_data *data, char **argv);
 
 int	init_data(t_data *data, char **argv)
 {
@@ -22,26 +24,41 @@ int	init_data(t_data *data, char **argv)
 	data->philosophers = malloc(sizeof(t_philosopher) * data->num_philosophers);
 	data->forks = malloc(sizeof(pthread_mutex_t) * data->num_philosophers);
 	if (!data->philosophers || !data->forks)
+	{
+		if (data->philosophers)
+			free(data->philosophers);
+		if (data->forks)
+			free(data->forks);
 		return (NOK);
+	}
 	while (i < data->num_philosophers)
 	{
 		data->philosophers[i].id = i + 1;
 		data->philosophers[i].times_eaten = 0;
+		data->philosophers[i].data = data;
+		data->philosophers[i].last_meal_time = 0;
 		if (pthread_mutex_init(&data->forks[i], NULL) != 0)
 		{
-			cleanup_data(data);
+			while (--i >= 0)
+				pthread_mutex_destroy(&data->forks[i]);
+			free(data->philosophers);
+			free(data->forks);
 			return (NOK);
 		}
+		i++;
 	}
 	if (pthread_mutex_init(&data->print_mutex, NULL) != 0)
 	{
-		cleanup_data(data);
+		while (--i >= 0)
+			pthread_mutex_destroy(&data->forks[i]);
+		free(data->philosophers);
+		free(data->forks);
 		return (NOK);
 	}
 	return (OK);
 }
 
-int	parse_arguments(t_data *data, char **argv)
+static int	parse_arguments(t_data *data, char **argv)
 {
 	data->num_philosophers = ft_atoi(argv[1]);
 	data->time_to_die = ft_atoi(argv[2]);

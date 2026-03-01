@@ -16,7 +16,9 @@
 **   TEST_MALLOC_1=1        Force malloc()               to fail on call #1
 **   TEST_MALLOC_N=<n>      Force malloc()               to fail on call #n
 **   TEST_PTHREAD_CREATE=1  Force pthread_create()       to fail every time
+**   TEST_MUTEX_INIT=1      Force pthread_mutex_init()   to fail every time
 **   TEST_MUTEX_LOCK=1      Force pthread_mutex_lock()   to fail every time
+**   TEST_DETACH=1          Force pthread_detach()       to fail every time
 **   TEST_RANDOM_FAIL=1     Each intercepted call has a ~5 % chance to fail
 **
 ** When a failure is injected the wrapper returns the canonical POSIX error
@@ -45,13 +47,20 @@ typedef void *(*real_malloc_t)(size_t);
 typedef int   (*real_pthread_create_t)(pthread_t *, const pthread_attr_t *,
                                        void *(*)(void *), void *);
 typedef int   (*real_pthread_mutex_lock_t)(pthread_mutex_t *);
+typedef int   (*real_pthread_mutex_init_t)(pthread_mutex_t *,
+                                           const pthread_mutexattr_t *);
+typedef int   (*real_pthread_detach_t)(pthread_t);
 
 static _Atomic(real_malloc_t)             _real_malloc;
 static _Atomic(real_pthread_create_t)     _real_pthread_create;
 static _Atomic(real_pthread_mutex_lock_t) _real_pthread_mutex_lock;
+static _Atomic(real_pthread_mutex_init_t) _real_pthread_mutex_init;
+static _Atomic(real_pthread_detach_t)     _real_pthread_detach;
 
 /* Counters for call-number-based failures (used by TEST_MALLOC_N). */
 static atomic_int _malloc_call_count = 0;
+static atomic_int _mutex_init_call_count = 0;
+static atomic_int _detach_call_count = 0;
 
 /* -------------------------------------------------------------------------
 ** Initialise real-function pointers via dlsym(RTLD_NEXT).
@@ -75,6 +84,20 @@ static void init_real_pthread_mutex_lock(void)
     if (!_real_pthread_mutex_lock)
         _real_pthread_mutex_lock =
             (real_pthread_mutex_lock_t)dlsym(RTLD_NEXT, "pthread_mutex_lock");
+}
+
+static void init_real_pthread_mutex_init(void)
+{
+    if (!_real_pthread_mutex_init)
+        _real_pthread_mutex_init =
+            (real_pthread_mutex_init_t)dlsym(RTLD_NEXT, "pthread_mutex_init");
+}
+
+static void init_real_pthread_detach(void)
+{
+    if (!_real_pthread_detach)
+        _real_pthread_detach =
+            (real_pthread_detach_t)dlsym(RTLD_NEXT, "pthread_detach");
 }
 
 /* -------------------------------------------------------------------------
@@ -182,7 +205,63 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
     init_real_pthread_mutex_lock();
 
     if (env_flag("TEST_MUTEX_LOCK"))
+
+
+/* -------------------------------------------------------------------------
+** pthread_mutex_init interception
+** ---------------------------------------------------------------------- */
+int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
+{
+    init_real_pthread_mutex_init();
+
+    int call_n = atomic_fetch_add(&_mutex_init_call_count, 1) + 1;
+
+    if (env_flag("TEST_MUTEX_INIT"))
     {
+        fprintf(stderr,
+            "[mock_posix] pthread_mutex_init() call #%d INJECTED FAILURE (TEST_MUTEX_INIT)\n",
+            call_n);
+        return ENOMEM;
+    }
+
+    if (random_fail())
+    {
+        fprintf(stderr,
+            "[mock_posix] pthread_mutex_init() call #%d INJECTED RANDOM FAILURE\n",
+            call_n);
+        return ENOMEM;
+    }
+
+    return _real_pthread_mutex_init(mutex, attr);
+}
+
+/* -------------------------------------------------------------------------
+** pthread_detach interception
+** ---------------------------------------------------------------------- */
+int pthread_detach(pthread_t thread)
+{
+    init_real_pthread_detach();
+
+    int call_n = atomic_fetch_add(&_detach_call_count, 1) + 1;
+
+    if (env_flag("TEST_DETACH"))
+    {
+        fprintf(stderr,
+            "[mock_posix] pthread_detach() call #%d INJECTED FAILURE (TEST_DETACH)\n",
+            call_n);
+        return EINVAL;
+    }
+
+    if (random_fail())
+    {
+        fprintf(stderr,
+            "[mock_posix] pthread_detach() call #%d INJECTED RANDOM FAILURE\n",
+            call_n);
+        return EINVAL;
+    }
+
+    return _real_pthread_detach(thread);
+}   {
         fprintf(stderr,
             "[mock_posix] pthread_mutex_lock() INJECTED FAILURE (TEST_MUTEX_LOCK)\n");
         return EDEADLK;

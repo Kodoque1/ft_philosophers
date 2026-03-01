@@ -459,13 +459,20 @@ def stress_loop(binary: str, iterations: int, timeout: float) -> bool:
         rc, stdout, _ = run_philo(binary, [5, 800, 200, 200], min(timeout, 4.0))
         events = parse_log_lines(stdout)
         deaths = [ev for ev in events if "died" in ev["action"].lower()]
+
+        # Check for unexpected deaths
         if deaths:
             fail(f"  Stress iteration {i}/{iterations}: unexpected death detected")
             passed = False
         else:
-            info(f"  Iteration {i}/{iterations}: OK ({len(events)} events)")
+            # Also check for ghost actions even if no deaths in this iteration
+            if not invariant_no_ghost_actions(events):
+                fail(f"  Stress iteration {i}/{iterations}: ghost actions detected")
+                passed = False
+            else:
+                info(f"  Iteration {i}/{iterations}: OK ({len(events)} events)")
     if passed:
-        ok(f"Stress loop: all {iterations} iterations passed without unexpected deaths")
+        ok(f"Stress loop: all {iterations} iterations passed without unexpected deaths or ghost actions")
     return passed
 
 

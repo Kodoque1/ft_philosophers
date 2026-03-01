@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:46:37 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 17:18:35 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 18:31:49 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,11 +17,20 @@ int	start_philosophers(t_data *data, void *(*philosopher_routine)(void *))
 	int	i;
 
 	i = 0;
+	data->start_time = get_current_time();
+	if (data->start_time == -1)
+		return (NOK);
 	while (i < data->num_philosophers)
 	{
+		data->philosophers[i].last_meal_time = data->start_time;
 		if (pthread_create(&data->philosophers[i].thread, NULL,
 				philosopher_routine, &data->philosophers[i]) != 0)
+		{
+			data->simulation_ended = 1;
+			while (--i >= 0)
+				pthread_join(data->philosophers[i].thread, NULL);
 			return (NOK);
+		}
 		i++;
 	}
 	return (OK);

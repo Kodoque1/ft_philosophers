@@ -6,13 +6,13 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/01 17:00:00 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 17:02:36 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 18:31:49 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_philo.h"
 
-int	lock_fork(pthread_mutex_t *fork, t_data *data)
+int	lock_fork(pthread_mutex_t *fork, t_philosopher *philo, t_data *data)
 {
 	if (pthread_mutex_lock(fork) != 0)
 	{
@@ -20,7 +20,8 @@ int	lock_fork(pthread_mutex_t *fork, t_data *data)
 		data->simulation_ended = 1;
 		return (NOK);
 	}
-	concurent_print("has taken a fork", data);
+	if (philo_print(philo->id, "has taken a fork", data) == NOK)
+		return (NOK);
 	return (OK);
 }
 
@@ -37,16 +38,16 @@ int	unlock_fork(pthread_mutex_t *fork, t_data *data)
 
 int	acquire_forks(t_philosopher *philo, int first, int second)
 {
-	if (lock_fork(&philo->data->forks[first], philo->data) == NOK)
+	if (lock_fork(&philo->data->forks[first], philo, philo->data) == NOK)
 		return (NOK);
-	if (lock_fork(&philo->data->forks[second], philo->data) == NOK)
+	if (lock_fork(&philo->data->forks[second], philo, philo->data) == NOK)
 		return (NOK);
 	return (OK);
 }
 
 int	release_forks(t_philosopher *philo)
 {
-	if (unlock_fork(&philo->data->forks[philo->id - 1
+	if (unlock_fork(&philo->data->forks[(philo->id - 1)
 				% philo->data->num_philosophers], philo->data) == NOK)
 		return (NOK);
 	if (unlock_fork(&philo->data->forks[philo->id

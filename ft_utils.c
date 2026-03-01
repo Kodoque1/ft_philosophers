@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:30:56 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 17:30:09 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 18:31:49 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,16 +42,16 @@ int	ft_itoa(int n, char *buffer, int buffer_size)
 	int		i;
 	int		is_negative;
 	char	temp;
+	int		j;
 
 	if (buffer_size < 2)
 		return (-1);
-	is_negative = 0;
-	if (n < 0)
-	{
-		is_negative = 1;
+	is_negative = (n < 0);
+	if (is_negative)
 		n = -n;
-	}
 	i = 0;
+	if (n == 0)
+		buffer[i++] = '0';
 	while (n > 0 && i < buffer_size - 1)
 	{
 		buffer[i++] = (n % 10) + '0';
@@ -60,13 +60,15 @@ int	ft_itoa(int n, char *buffer, int buffer_size)
 	if (is_negative && i < buffer_size - 1)
 		buffer[i++] = '-';
 	buffer[i] = '\0';
-	for (int j = 0; j < i / 2; j++)
+	j = 0;
+	while (j < i / 2)
 	{
 		temp = buffer[j];
 		buffer[j] = buffer[i - j - 1];
 		buffer[i - j - 1] = temp;
+		j++;
 	}
-	return (0);
+	return (i);
 }
 
 int	is_valid_number(const char *str)
