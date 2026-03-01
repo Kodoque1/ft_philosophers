@@ -69,7 +69,7 @@ int	philo_print(int id, const char *message, t_data *data)
 	if (len == -1)
 		return (NOK);
 	buffer[len] = ' ';
-	len += ft_itoa(id, buffer + len + 1, sizeof(buffer) - len - 1);
+	len += ft_itoa(id, buffer + len + 1, (int)sizeof(buffer) - len - 1);
 	if (len == -1)
 		return (NOK);
 	buffer[len + 1] = ' ';

@@ -100,7 +100,7 @@ static unsigned int get_max_us(void)
 
 	if (v && *v)
 	{
-		int n = ft_atoi(v);
+		int n = atoi(v);
 		if (n > 0)
 			return ((unsigned int)n);
 	}
@@ -146,7 +146,7 @@ static unsigned int next_delay_us(void)
 			if (atomic_compare_exchange_strong(&_seeded, &expected, 1))
 			{
 				const char   *s    = getenv("SCHED_MOCK_SEED");
-				unsigned int  seed = s ? (unsigned int)ft_atoi(s) : 42u;
+				unsigned int  seed = s ? (unsigned int)atoi(s) : 42u;
 				atomic_store(&_lcg_state, seed);
 			}
 		}
