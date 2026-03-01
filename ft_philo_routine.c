@@ -68,7 +68,7 @@ void	*philosophers(void *arg)
 
 	philo = (t_philosopher *)arg;
 	if (philo->data->num_philosophers > 1 && philo->id % 2 == 0)
-		usleep(philo->data->time_to_eat * 1000);
+		usleep(philo->data->time_to_eat * 1000); /* stagger even philos */
 	while (1)
 	{
 		if (philo->data->num_times_must_eat != -1
