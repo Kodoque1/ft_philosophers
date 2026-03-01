@@ -34,6 +34,7 @@ typedef struct s_philosopher
 	int				id;
 	int				times_eaten;
 	int				last_meal_time;
+	pthread_mutex_t	meal_mutex;
 	pthread_t		thread;
 	t_data			*data;
 }					t_philosopher;
@@ -48,6 +49,7 @@ typedef struct s_data
 	t_philosopher	*philosophers;
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	print_mutex;
+	pthread_mutex_t	death_mutex;
 	int				simulation_ended;
 	int				start_time;
 }					t_data;
@@ -58,6 +60,8 @@ typedef struct s_monitor
 	t_data			*data;
 }					t_monitor;
 
+int					is_sim_ended(t_data *data);
+void				end_simulation(t_data *data);
 int					validate_args(int argc, char **argv);
 int					ft_atoi(const char *str);
 int					ft_itoa(int n, char *buffer, int buffer_size);

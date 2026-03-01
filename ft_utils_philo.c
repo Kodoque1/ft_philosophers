@@ -12,6 +12,23 @@
 
 #include "ft_philo.h"
 
+int	is_sim_ended(t_data *data)
+{
+	int	ended;
+
+	pthread_mutex_lock(&data->death_mutex);
+	ended = data->simulation_ended;
+	pthread_mutex_unlock(&data->death_mutex);
+	return (ended);
+}
+
+void	end_simulation(t_data *data)
+{
+	pthread_mutex_lock(&data->death_mutex);
+	data->simulation_ended = 1;
+	pthread_mutex_unlock(&data->death_mutex);
+}
+
 int	fragmented_sleep(int milliseconds, t_data *data)
 {
 	long long	start_time;
@@ -20,7 +37,7 @@ int	fragmented_sleep(int milliseconds, t_data *data)
 	start_time = get_current_time();
 	while (1)
 	{
-		if (data->simulation_ended)
+		if (is_sim_ended(data))
 			return (OK);
 		current_time = get_current_time();
 		if (current_time - start_time >= milliseconds)
@@ -32,11 +49,11 @@ int	fragmented_sleep(int milliseconds, t_data *data)
 
 int	concurent_print(const char *message, t_data *data)
 {
-	if (data->simulation_ended)
+	if (is_sim_ended(data))
 		return (NOK);
 	if (pthread_mutex_lock(&data->print_mutex) != 0)
 		return (NOK);
-	if (data->simulation_ended)
+	if (is_sim_ended(data))
 		return (pthread_mutex_unlock(&data->print_mutex), NOK);
 	write(STDOUT_FILENO, message, ft_strlen(message));
 	write(STDOUT_FILENO, "\n", 1);
@@ -60,7 +77,7 @@ int	philo_print(int id, const char *message, t_data *data)
 	char	buffer[INT_SIZE * 2 + 3];
 	int		ts;
 
-	if (data->simulation_ended)
+	if (is_sim_ended(data))
 		return (NOK);
 	ts = get_current_time() - data->start_time;
 	if (ts == -1)
@@ -69,7 +86,7 @@ int	philo_print(int id, const char *message, t_data *data)
 	if (len == -1)
 		return (NOK);
 	buffer[len] = ' ';
-	len += ft_itoa(id, buffer + len + 1, sizeof(buffer) - len - 1);
+	len += ft_itoa(id, buffer + len + 1, (int)sizeof(buffer) - len - 1);
 	if (len == -1)
 		return (NOK);
 	buffer[len + 1] = ' ';

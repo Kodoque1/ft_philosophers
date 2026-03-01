@@ -115,7 +115,7 @@ static int env_flag(const char *name)
 static int env_int(const char *name)
 {
     const char *v = getenv(name);
-    return v ? ft_atoi(v) : -1;
+    return v ? atoi(v) : -1;
 }
 
 /* Pseudo-random failure with a probability of roughly 1/20 (~5 %).
@@ -205,7 +205,21 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
     init_real_pthread_mutex_lock();
 
     if (env_flag("TEST_MUTEX_LOCK"))
+    {
+        fprintf(stderr,
+            "[mock_posix] pthread_mutex_lock() INJECTED FAILURE (TEST_MUTEX_LOCK)\n");
+        return EDEADLK;
+    }
 
+    if (random_fail())
+    {
+        fprintf(stderr,
+            "[mock_posix] pthread_mutex_lock() INJECTED RANDOM FAILURE\n");
+        return EDEADLK;
+    }
+
+    return _real_pthread_mutex_lock(mutex);
+}
 
 /* -------------------------------------------------------------------------
 ** pthread_mutex_init interception
@@ -261,18 +275,4 @@ int pthread_detach(pthread_t thread)
     }
 
     return _real_pthread_detach(thread);
-}   {
-        fprintf(stderr,
-            "[mock_posix] pthread_mutex_lock() INJECTED FAILURE (TEST_MUTEX_LOCK)\n");
-        return EDEADLK;
-    }
-
-    if (random_fail())
-    {
-        fprintf(stderr,
-            "[mock_posix] pthread_mutex_lock() INJECTED RANDOM FAILURE\n");
-        return EDEADLK;
-    }
-
-    return _real_pthread_mutex_lock(mutex);
 }

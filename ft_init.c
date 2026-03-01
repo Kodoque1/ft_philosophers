@@ -40,7 +40,22 @@ int	init_data(t_data *data, char **argv)
 		if (pthread_mutex_init(&data->forks[i], NULL) != 0)
 		{
 			while (--i >= 0)
+			{
 				pthread_mutex_destroy(&data->forks[i]);
+				pthread_mutex_destroy(&data->philosophers[i].meal_mutex);
+			}
+			free(data->philosophers);
+			free(data->forks);
+			return (NOK);
+		}
+		if (pthread_mutex_init(&data->philosophers[i].meal_mutex, NULL) != 0)
+		{
+			pthread_mutex_destroy(&data->forks[i]);
+			while (--i >= 0)
+			{
+				pthread_mutex_destroy(&data->forks[i]);
+				pthread_mutex_destroy(&data->philosophers[i].meal_mutex);
+			}
 			free(data->philosophers);
 			free(data->forks);
 			return (NOK);
@@ -50,11 +65,27 @@ int	init_data(t_data *data, char **argv)
 	if (pthread_mutex_init(&data->print_mutex, NULL) != 0)
 	{
 		while (--i >= 0)
+		{
 			pthread_mutex_destroy(&data->forks[i]);
+			pthread_mutex_destroy(&data->philosophers[i].meal_mutex);
+		}
 		free(data->philosophers);
 		free(data->forks);
 		return (NOK);
 	}
+	if (pthread_mutex_init(&data->death_mutex, NULL) != 0)
+	{
+		pthread_mutex_destroy(&data->print_mutex);
+		while (--i >= 0)
+		{
+			pthread_mutex_destroy(&data->forks[i]);
+			pthread_mutex_destroy(&data->philosophers[i].meal_mutex);
+		}
+		free(data->philosophers);
+		free(data->forks);
+		return (NOK);
+	}
+	data->simulation_ended = 0;
 	return (OK);
 }
 
