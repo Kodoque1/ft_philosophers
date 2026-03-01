@@ -6,21 +6,21 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/27 21:55:46 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 23:39:14 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 23:51:21 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_philo.h"
 
-static void	cleanup_init(t_data *data, int n)
+static void	init_cleanup_state(t_data *data)
 {
-	while (--n >= 0)
-	{
-		pthread_mutex_destroy(&data->forks[n]);
-		pthread_mutex_destroy(&data->philosophers[n].meal_mutex);
-	}
-	free(data->philosophers);
-	free(data->forks);
+	data->philosophers = NULL;
+	data->forks = NULL;
+	data->initialized_philos = 0;
+	data->print_mutex_initialized = 0;
+	data->death_mutex_initialized = 0;
+	data->simulation_ended = 0;
+	data->start_time = 0;
 }
 
 static int	init_philo_at(t_data *data, int i)
@@ -30,16 +30,13 @@ static int	init_philo_at(t_data *data, int i)
 	data->philosophers[i].data = data;
 	data->philosophers[i].last_meal_time = 0;
 	if (pthread_mutex_init(&data->forks[i], NULL) != 0)
-	{
-		cleanup_init(data, i);
-		return (NOK);
-	}
+		return (cleanup_data(data), NOK);
 	if (pthread_mutex_init(&data->philosophers[i].meal_mutex, NULL) != 0)
 	{
 		pthread_mutex_destroy(&data->forks[i]);
-		cleanup_init(data, i);
-		return (NOK);
+		return (cleanup_data(data), NOK);
 	}
+	data->initialized_philos++;
 	return (OK);
 }
 
@@ -50,11 +47,7 @@ static int	init_philosophers_loop(t_data *data)
 	data->philosophers = malloc(sizeof(t_philosopher) * data->num_philosophers);
 	data->forks = malloc(sizeof(pthread_mutex_t) * data->num_philosophers);
 	if (!data->philosophers || !data->forks)
-	{
-		free(data->philosophers);
-		free(data->forks);
-		return (NOK);
-	}
+		return (cleanup_data(data), NOK);
 	i = 0;
 	while (i < data->num_philosophers)
 	{
@@ -84,21 +77,16 @@ static int	parse_arguments(t_data *data, char **argv)
 
 int	init_data(t_data *data, char **argv)
 {
+	init_cleanup_state(data);
 	if (parse_arguments(data, argv) == NOK)
-		return (NOK);
+		return (cleanup_data(data), NOK);
 	if (init_philosophers_loop(data) == NOK)
 		return (NOK);
 	if (pthread_mutex_init(&data->print_mutex, NULL) != 0)
-	{
-		cleanup_init(data, data->num_philosophers);
-		return (NOK);
-	}
+		return (cleanup_data(data), NOK);
+	data->print_mutex_initialized = 1;
 	if (pthread_mutex_init(&data->death_mutex, NULL) != 0)
-	{
-		pthread_mutex_destroy(&data->print_mutex);
-		cleanup_init(data, data->num_philosophers);
-		return (NOK);
-	}
-	data->simulation_ended = 0;
+		return (cleanup_data(data), NOK);
+	data->death_mutex_initialized = 1;
 	return (OK);
 }

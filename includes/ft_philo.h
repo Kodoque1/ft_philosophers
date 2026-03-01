@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:26:24 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 23:39:26 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/01 23:51:26 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,9 @@ typedef struct s_data
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	print_mutex;
 	pthread_mutex_t	death_mutex;
+	int				initialized_philos;
+	int				print_mutex_initialized;
+	int				death_mutex_initialized;
 	int				simulation_ended;
 	int				start_time;
 }					t_data;
