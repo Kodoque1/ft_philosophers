@@ -68,7 +68,7 @@ static int	philo_cycle(t_philosopher *philo)
 	release_forks(philo);
 	if (philo_sleep(philo) == NOK)
 		return (NOK);
-	if (philo->data->num_philosophers % 2 != 0)
+	if (philo->data->num_philosophers % 2 != 0 && philo->id % 2 != 0)
 		if (fragmented_sleep(philo->data->time_to_eat / 2, philo->data) == NOK)
 			return (NOK);
 	return (OK);
