@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:46:37 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/03 11:37:48 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 16:12:06 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,14 @@
 
 static int	make_print_prefix(int id, t_data *data, char *buffer)
 {
-	int	ts;
-	int	len;
+	long long	current;
+	int		ts;
+	int		len;
 
-	ts = get_current_time() - data->start_time;
-	if (ts == -1)
+	current = get_current_time();
+	if (current == -1)
 		return (-1);
+	ts = (int)(current - data->start_time);
 	len = ft_itoa(ts, buffer, INT_SIZE * 2 + 3);
 	if (len == -1)
 		return (-1);

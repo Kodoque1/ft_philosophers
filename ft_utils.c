@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:30:56 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/03 11:37:48 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 16:12:06 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,19 +56,21 @@ int	ft_itoa(int n, char *buffer, int buffer_size)
 {
 	int		i;
 	int		is_negative;
+	long	num;
 
 	if (buffer_size < 2)
 		return (-1);
-	is_negative = (n < 0);
+	num = n;
+	is_negative = (num < 0);
 	if (is_negative)
-		n = -n;
+		num = -num;
 	i = 0;
-	if (n == 0)
+	if (num == 0)
 		buffer[i++] = '0';
-	while (n > 0 && i < buffer_size - 1)
+	while (num > 0 && i < buffer_size - 1)
 	{
-		buffer[i++] = (n % 10) + '0';
-		n /= 10;
+		buffer[i++] = (num % 10) + '0';
+		num /= 10;
 	}
 	if (is_negative && i < buffer_size - 1)
 		buffer[i++] = '-';

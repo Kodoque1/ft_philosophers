@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:17:26 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/03 11:37:48 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 14:48:28 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,11 +84,22 @@ int	main(int argc, char **argv)
 
 	data = (t_data){0};
 	status = -1;
-	if (validate_args(argc, argv) == OK && init_data(&data, argv) == OK
-		&& start_philosophers(&data) == OK
-		&& start_monitoring_thread(&data) == OK
-		&& wait_for_philosophers(&data) == OK)
-		status = 0;
+	if (validate_args(argc, argv) == OK && init_data(&data, argv) == OK)
+	{
+		if (start_philosophers(&data) == OK)
+		{
+			if (start_monitoring_thread(&data) == OK
+				&& wait_for_philosophers(&data) == OK
+				&& wait_for_monitoring_thread(&data) == OK)
+				status = 0;
+			else
+			{
+				end_simulation(&data);
+				wait_for_philosophers(&data);
+				wait_for_monitoring_thread(&data);
+			}
+		}
+	}
 	cleanup_data(&data);
 	return (status);
 }

@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:30:56 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/03 11:37:48 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 16:12:06 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ void	wait_for_start(t_philosopher *philo)
 	int	ready;
 
 	ready = 0;
-	while (!ready)
+	while (!ready && !is_sim_ended(philo->data))
 	{
 		pthread_mutex_lock(&philo->data->start_mutex);
 		ready = philo->data->all_philosophers_ready;

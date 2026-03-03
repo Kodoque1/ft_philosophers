@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/27 21:38:20 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/03 11:37:48 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 14:48:28 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,16 +17,21 @@ static int	check_all_philosophers_full(t_data *data);
 
 int	start_monitoring_thread(t_data *data)
 {
-	pthread_t	monitor;
+	data->monitor_started = 0;
+	if (pthread_create(&data->monitor_thread, NULL, monitoring_thread,
+			data) != 0)
+		return (NOK);
+	data->monitor_started = 1;
+	return (OK);
+}
 
-	if (pthread_create(&monitor, NULL, monitoring_thread, data) != 0)
+int	wait_for_monitoring_thread(t_data *data)
+{
+	if (!data->monitor_started)
+		return (OK);
+	if (pthread_join(data->monitor_thread, NULL) != 0)
 		return (NOK);
-	if (pthread_detach(monitor) != 0)
-	{
-		end_simulation(data);
-		pthread_join(monitor, NULL);
-		return (NOK);
-	}
+	data->monitor_started = 0;
 	return (OK);
 }
 

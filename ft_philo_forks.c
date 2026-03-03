@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/01 17:00:00 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 23:39:23 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 16:12:06 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ int	acquire_forks(t_philosopher *philo)
 		return (NOK);
 	if (lock_fork(&philo->data->forks[second], philo, philo->data) == NOK)
 	{
-		pthread_mutex_unlock(&philo->data->forks[first]);
+		unlock_fork(&philo->data->forks[first], philo->data);
 		return (NOK);
 	}
 	return (OK);

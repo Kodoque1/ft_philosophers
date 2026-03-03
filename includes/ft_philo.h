@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:26:24 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/03 11:37:48 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 14:48:28 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,8 @@ typedef struct s_data
 	int					all_philosophers_ready;
 	int					simulation_ended;
 	long long			start_time;
+	pthread_t			monitor_thread;
+	int					monitor_started;
 }						t_data;
 
 typedef struct s_monitor
@@ -93,5 +95,6 @@ int						acquire_forks(t_philosopher *philo);
 int						release_forks(t_philosopher *philo);
 int						philo_eat(t_philosopher *philo);
 int						start_monitoring_thread(t_data *data);
+int						wait_for_monitoring_thread(t_data *data);
 
 #endif
