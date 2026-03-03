@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:30:56 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/03 11:26:58 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 11:37:48 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,6 +73,3 @@ int	fragmented_sleep(int milliseconds, t_data *data)
 	}
 	return (OK);
 }
-
-
-
