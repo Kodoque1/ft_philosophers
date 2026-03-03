@@ -69,15 +69,15 @@ int	start_philosophers(t_data *data)
 {
 	int	i;
 
-	i = 0;
 	data->start_time = get_current_time();
 	if (data->start_time == -1)
 		return (NOK);
+	i = 0;
 	while (i < data->num_philosophers)
 	{
 		data->philosophers[i].last_meal_time = data->start_time;
-		if (pthread_create(&data->philosophers[i].thread, NULL,
-				philosophers, &data->philosophers[i]) != 0)
+		if (pthread_create(&data->philosophers[i].thread, NULL, philosophers,
+				&data->philosophers[i]) != 0)
 		{
 			end_simulation(data);
 			while (--i >= 0)

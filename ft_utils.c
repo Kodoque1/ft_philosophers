@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/26 17:30:56 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/01 23:39:18 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 10:51:41 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,7 @@ int	is_valid_number(const char *str)
 	return (1);
 }
 
-int	get_current_time(void)
+long long	get_current_time(void)
 {
 	struct timeval	tv;
 	long long		milliseconds;
@@ -101,7 +101,8 @@ int	get_current_time(void)
 	if (gettimeofday(&tv, NULL) == -1)
 		return (-1);
 	milliseconds = (tv.tv_sec * 1000LL) + (tv.tv_usec / 1000LL);
-	return ((int)milliseconds);
+	return (milliseconds);
 }
+
 
 

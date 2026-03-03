@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/01 17:00:00 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/02 00:36:39 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 11:26:58 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,24 +77,15 @@ static int	philo_cycle(t_philosopher *philo)
 void	*philosophers(void *arg)
 {
 	t_philosopher	*philo;
-	int				ready;
+	int				times_eaten;
 
 	philo = (t_philosopher *)arg;
-	ready = 0;
-	while (!ready)
-	{
-		pthread_mutex_lock(&philo->data->start_mutex);
-		ready = philo->data->all_philosophers_ready;
-		pthread_mutex_unlock(&philo->data->start_mutex);
-		if (!ready)
-			usleep(100);
-	}
-	if (philo->data->num_philosophers > 1 && philo->id % 2 == 0)
-		fragmented_sleep(philo->data->time_to_eat, philo->data);
+	wait_for_start(philo);
 	while (1)
 	{
+		times_eaten = get_times_eaten(philo);
 		if (philo->data->num_times_must_eat != -1
-			&& philo->times_eaten >= philo->data->num_times_must_eat)
+			&& times_eaten >= philo->data->num_times_must_eat)
 			break ;
 		if (philo_cycle(philo) == NOK)
 			return (NULL);

@@ -84,7 +84,6 @@ int	main(int argc, char **argv)
 
 	data = (t_data){0};
 	status = -1;
-
 	if (validate_args(argc, argv) == OK && init_data(&data, argv) == OK
 		&& start_philosophers(&data) == OK
 		&& start_monitoring_thread(&data) == OK

@@ -1,0 +1,5 @@
+- max 25 lines per function
+- max 4 parameters per function
+- use descriptive names for functions and variables
+- avoid deep nesting (more than 3 levels)
+- max 5 functions per file

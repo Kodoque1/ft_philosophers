@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/27 21:38:20 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/02 00:13:31 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 11:37:48 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,9 +60,7 @@ static int	check_all_philosophers_full(t_data *data)
 	i = 0;
 	while (i < data->num_philosophers)
 	{
-		pthread_mutex_lock(&data->philosophers[i].meal_mutex);
-		times_eaten = data->philosophers[i].times_eaten;
-		pthread_mutex_unlock(&data->philosophers[i].meal_mutex);
+		times_eaten = get_times_eaten(&data->philosophers[i]);
 		if (times_eaten < data->num_times_must_eat)
 			return (0);
 		i++;
