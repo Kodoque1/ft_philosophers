@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/27 21:38:20 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/03 14:48:28 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 17:19:29 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,8 +76,8 @@ static int	check_all_philosophers_full(t_data *data)
 static int	check_philosopher_death(t_data *data)
 {
 	int	i;
-	int	current_time;
-	int	last_meal;
+	long long	current_time;
+	long long	last_meal;
 
 	i = 0;
 	current_time = get_current_time();
