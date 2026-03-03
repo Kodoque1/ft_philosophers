@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/27 21:55:46 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/03 16:12:06 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 17:07:59 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,10 +89,20 @@ int	init_data(t_data *data, char **argv)
 		return (NOK);
 	data->print_mutex_initialized = 1;
 	if (pthread_mutex_init(&data->death_mutex, NULL) != 0)
+	{
+		pthread_mutex_destroy(&data->print_mutex);
+		data->print_mutex_initialized = 0;
 		return (NOK);
+	}
 	data->death_mutex_initialized = 1;
 	if (pthread_mutex_init(&data->start_mutex, NULL) != 0)
+	{
+		pthread_mutex_destroy(&data->death_mutex);
+		pthread_mutex_destroy(&data->print_mutex);
+		data->death_mutex_initialized = 0;
+		data->print_mutex_initialized = 0;
 		return (NOK);
+	}
 	data->start_mutex_initialized = 1;
 	return (OK);
 }
