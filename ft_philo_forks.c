@@ -6,7 +6,7 @@
 /*   By: zaddi <zaddi@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/01 17:00:00 by zaddi             #+#    #+#             */
-/*   Updated: 2026/03/03 16:12:06 by zaddi            ###   ########.fr       */
+/*   Updated: 2026/03/03 17:03:43 by zaddi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,11 +68,15 @@ int	acquire_forks(t_philosopher *philo)
 
 int	release_forks(t_philosopher *philo)
 {
-	if (unlock_fork(&philo->data->forks[(philo->id - 1)
-				% philo->data->num_philosophers], philo->data) == NOK)
-		return (NOK);
-	if (unlock_fork(&philo->data->forks[philo->id
-				% philo->data->num_philosophers], philo->data) == NOK)
-		return (NOK);
-	return (OK);
+	int	first;
+	int	second;
+	int	ret;
+
+	get_fork_indices(philo, &first, &second);
+	ret = OK;
+	if (unlock_fork(&philo->data->forks[first], philo->data) == NOK)
+		ret = NOK;
+	if (unlock_fork(&philo->data->forks[second], philo->data) == NOK)
+		ret = NOK;
+	return (ret);
 }
