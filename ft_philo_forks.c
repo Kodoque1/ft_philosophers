@@ -60,7 +60,8 @@ int	acquire_forks(t_philosopher *philo)
 		return (NOK);
 	if (lock_fork(&philo->data->forks[second], philo, philo->data) == NOK)
 	{
-		unlock_fork(&philo->data->forks[first], philo->data);
+		if (unlock_fork(&philo->data->forks[first], philo->data) == NOK)
+			end_simulation(philo->data);
 		return (NOK);
 	}
 	return (OK);
